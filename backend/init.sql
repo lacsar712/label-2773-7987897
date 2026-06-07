@@ -414,3 +414,46 @@ INSERT INTO employee_storage_quota (employee_id, employee_name) VALUES
 (3, '王五'),
 (4, '赵六'),
 (5, '钱七');
+
+CREATE TABLE IF NOT EXISTS sys_message (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    employee_id BIGINT NOT NULL COMMENT '员工ID',
+    employee_name VARCHAR(100) COMMENT '员工姓名',
+    event_type VARCHAR(50) NOT NULL COMMENT 'APPROVAL_FLOW,ANNOUNCEMENT,CONTRACT_EXPIRY,ONBOARDING_OVERDUE,ATTENDANCE_ABNORMAL,SALARY_PAID,PERFORMANCE_REMIND,ATTACHMENT_EXPIRY,SYSTEM',
+    title VARCHAR(200) NOT NULL COMMENT '消息标题',
+    summary VARCHAR(500) COMMENT '消息摘要',
+    biz_type VARCHAR(50) COMMENT '关联业务类型',
+    biz_id VARCHAR(100) COMMENT '关联业务ID',
+    deep_link VARCHAR(500) COMMENT '跳转深链',
+    is_read TINYINT DEFAULT 0 COMMENT '是否已读',
+    read_at DATETIME COMMENT '阅读时间',
+    is_archived TINYINT DEFAULT 0 COMMENT '是否已归档',
+    archived_at DATETIME COMMENT '归档时间',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    INDEX idx_employee (employee_id),
+    INDEX idx_event_type (event_type),
+    INDEX idx_is_read (is_read),
+    INDEX idx_created (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS message_preference (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    employee_id BIGINT NOT NULL COMMENT '员工ID',
+    event_type VARCHAR(50) NOT NULL COMMENT '消息事件类型',
+    push_enabled TINYINT DEFAULT 1 COMMENT '是否开启推送',
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_emp_event (employee_id, event_type),
+    INDEX idx_employee (employee_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+INSERT INTO sys_message (employee_id, employee_name, event_type, title, summary, biz_type, biz_id, deep_link, is_read, is_archived, created_at) VALUES
+(1, '张三', 'APPROVAL_FLOW', '请假申请待审批', '您有一个请假申请等待审批，请及时处理', 'LEAVE', 'LEAVE-001', '/leave/detail?id=LEAVE-001', 0, 0, DATE_SUB(NOW(), INTERVAL 1 HOUR)),
+(1, '张三', 'ATTACHMENT_EXPIRY', '附件即将到期提醒', '您的劳动合同附件将在30天后到期，请及时续签', 'ATTACHMENT', '1', '/attachments', 0, 0, DATE_SUB(NOW(), INTERVAL 3 HOUR)),
+(1, '张三', 'PERFORMANCE_REMIND', '绩效自评提醒', 'Q2绩效评估已开始，请在截止日期前完成自评', 'PERFORMANCE', 'BATCH-001', '/performance/evaluation', 0, 0, DATE_SUB(NOW(), INTERVAL 5 HOUR)),
+(1, '张三', 'ANNOUNCEMENT', '公司端午节放假通知', '根据国务院安排，端午节6月19日-21日放假调休，共3天', 'ANNOUNCEMENT', 'ANN-001', '/announcements/ANN-001', 1, 0, DATE_SUB(NOW(), INTERVAL 2 DAY)),
+(1, '张三', 'SALARY_PAID', '5月薪资已发放', '您2026年5月的薪资已发放至您的工资卡，请注意查收', 'SALARY', '202605', '/salary/detail?month=202605', 1, 0, DATE_SUB(NOW(), INTERVAL 5 DAY)),
+(2, '李四', 'ATTENDANCE_ABNORMAL', '考勤异常提醒', '您6月7日的考勤记录存在异常，请及时核实处理', 'ATTENDANCE', '20260607', '/attendance/detail?date=2026-06-07', 0, 0, DATE_SUB(NOW(), INTERVAL 2 HOUR)),
+(2, '李四', 'APPROVAL_FLOW', '采购申请已通过', '您提交的采购申请已审批通过', 'PURCHASE', 'PUR-20260601', '/purchase/detail?id=PUR-20260601', 0, 0, DATE_SUB(NOW(), INTERVAL 1 DAY)),
+(3, '王五', 'PERFORMANCE_REMIND', '绩效结果确认', '您Q2的绩效评估结果已出，请登录系统确认', 'PERFORMANCE', 'EVAL-10086', '/performance/result', 0, 0, DATE_SUB(NOW(), INTERVAL 4 HOUR)),
+(4, '赵六', 'ONBOARDING_OVERDUE', '入职清单逾期提醒', '新员工入职清单中有3项已逾期未完成，请及时跟进', 'ONBOARDING', 'OB-2026001', '/onboarding/checklist', 0, 0, DATE_SUB(NOW(), INTERVAL 6 HOUR)),
+(5, '钱七', 'SYSTEM', '系统维护通知', '系统将于本周六凌晨2:00-4:00进行维护升级，届时将暂停服务', 'SYSTEM', 'SYS-001', '/system/notice', 0, 0, DATE_SUB(NOW(), INTERVAL 10 HOUR));

@@ -1,5 +1,7 @@
 package com.example.employee.service.attachment;
 
+import com.example.employee.entity.message.MessageEventType;
+import com.example.employee.service.message.SysMessageService;
 import com.example.employee.vo.ExpiringAttachmentVO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,6 +18,9 @@ public class AttachmentExpiryScheduler {
 
     @Autowired
     private EmployeeAttachmentService attachmentService;
+
+    @Autowired
+    private SysMessageService messageService;
 
     @Scheduled(cron = "0 0 8 * * ?")
     public void checkAndMarkExpiredAttachments() {
@@ -37,6 +42,18 @@ public class AttachmentExpiryScheduler {
                             vo.getCategoryName(),
                             vo.getFileName(),
                             vo.getDaysUntilExpiry());
+                    String title = "附件即将到期提醒";
+                    String summary = String.format("您的[%s]文件[%s]将在%d天后到期，请及时续签或更新",
+                            vo.getCategoryName(), vo.getFileName(), vo.getDaysUntilExpiry());
+                    messageService.sendMessage(
+                            vo.getEmployeeId(),
+                            MessageEventType.ATTACHMENT_EXPIRY,
+                            title,
+                            summary,
+                            "ATTACHMENT",
+                            String.valueOf(vo.getAttachmentId()),
+                            "/attachments"
+                    );
                 }
             } else {
                 logger.info("当前没有即将到期的附件");

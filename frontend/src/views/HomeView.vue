@@ -11,6 +11,7 @@
         </span>
       </div>
       <div class="header-right">
+        <MessageBell />
         <a-button @click="showSubscribeModal = true">
           <UserAddOutlined /> 订阅同事
         </a-button>
@@ -84,6 +85,7 @@ import {
   RightOutlined
 } from '@ant-design/icons-vue'
 import { useCalendarStore } from '../stores/calendar'
+import { useMessageStore } from '../stores/message'
 import MonthView from '../components/calendar/MonthView.vue'
 import WeekView from '../components/calendar/WeekView.vue'
 import DayTimelineDrawer from '../components/calendar/DayTimelineDrawer.vue'
@@ -91,9 +93,11 @@ import EventFormModal from '../components/calendar/EventFormModal.vue'
 import FilterPanel from '../components/calendar/FilterPanel.vue'
 import ExportModal from '../components/calendar/ExportModal.vue'
 import SubscribeModal from '../components/calendar/SubscribeModal.vue'
+import MessageBell from '../components/MessageBell.vue'
 import type { CalendarEvent } from '../types/calendar'
 
 const store = useCalendarStore()
+const messageStore = useMessageStore()
 
 const showEventModal = ref(false)
 const showExportModal = ref(false)
@@ -126,11 +130,13 @@ const currentLabel = computed(() => {
 })
 
 onMounted(async () => {
+  messageStore.setCurrentEmployee(store.currentUserId)
   try {
     await store.fetchEventTypes()
     await store.fetchEmployees()
     await store.fetchSubscriptions()
     await store.fetchEvents()
+    await messageStore.fetchPreview()
   } catch (e) {
     console.error(e)
     message.warning('无法连接到后端服务，已使用前端演示数据')
