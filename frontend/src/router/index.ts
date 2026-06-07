@@ -1,6 +1,7 @@
-import { createRouter, createWebHistory } from 'vue-router';
-import HomeView from '../views/HomeView.vue';
-import SystemConfigView from '../views/SystemConfigView.vue';
+import { createRouter, createWebHistory } from 'vue-router'
+import HomeView from '../views/HomeView.vue'
+import SystemConfigView from '../views/SystemConfigView.vue'
+import ScheduleManagementView from '../views/ScheduleManagementView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -8,14 +9,19 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
-      component: HomeView,
+      component: HomeView
+    },
+    {
+      path: '/schedule',
+      name: 'schedule',
+      component: ScheduleManagementView
     },
     {
       path: '/system/config',
       name: 'system-config',
-      component: SystemConfigView,
-    },
-  ],
-});
+      component: SystemConfigView
+    }
+  ]
+})
 
-export default router;
+export default router
