@@ -1,46 +1,51 @@
-import axios from 'axios';
-import { message } from 'ant-design-vue';
+import axios, { type AxiosRequestConfig } from 'axios'
+import { message } from 'ant-design-vue'
 
 const service = axios.create({
-  baseURL: '/api', // Base URL for all requests
-  timeout: 5000,   // Request timeout
-});
+  baseURL: 'http://localhost:8080',
+  timeout: 15000
+})
 
-// Request interceptor
 service.interceptors.request.use(
   (config) => {
-    // You can add auth token here if needed
-    // const token = localStorage.getItem('token');
-    // if (token) {
-    //   config.headers['Authorization'] = `Bearer ${token}`;
-    // }
-    return config;
+    return config
   },
   (error) => {
-    console.error('Request error:', error);
-    return Promise.reject(error);
+    console.error('Request error:', error)
+    return Promise.reject(error)
   }
-);
+)
 
-// Response interceptor
 service.interceptors.response.use(
   (response) => {
-    const res = response.data;
-    
-    // Check custom status code (assuming 200 is success)
+    if (response.config.responseType === 'blob') {
+      return response.data
+    }
+    const res = response.data
     if (res.code !== 200) {
-      message.error(res.message || 'Error');
-      return Promise.reject(new Error(res.message || 'Error'));
+      message.error(res.message || 'Error')
+      return Promise.reject(new Error(res.message || 'Error'))
     } else {
-      return res;
+      return res
     }
   },
   (error) => {
-    console.error('Response error:', error);
-    const msg = error.response?.data?.message || error.message || 'Network Error';
-    message.error(msg);
-    return Promise.reject(error);
+    console.error('Response error:', error)
+    const msg = error.response?.data?.message || error.message || 'Network Error'
+    message.error(msg)
+    return Promise.reject(error)
   }
-);
+)
 
-export default service;
+export default service
+
+export const request = {
+  get: <T = any>(url: string, config?: AxiosRequestConfig): Promise<T> =>
+    service.get(url, config) as Promise<T>,
+  post: <T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> =>
+    service.post(url, data, config) as Promise<T>,
+  put: <T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> =>
+    service.put(url, data, config) as Promise<T>,
+  delete: <T = any>(url: string, config?: AxiosRequestConfig): Promise<T> =>
+    service.delete(url, config) as Promise<T>
+}
