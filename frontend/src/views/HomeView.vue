@@ -12,6 +12,9 @@
       </div>
       <div class="header-right">
         <MessageBell />
+        <a-button @click="goToSystemConfig">
+          <SettingOutlined /> 系统设置
+        </a-button>
         <a-button @click="showSubscribeModal = true">
           <UserAddOutlined /> 订阅同事
         </a-button>
@@ -75,6 +78,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { message } from 'ant-design-vue'
+import { useRouter } from 'vue-router'
 import {
   CalendarOutlined,
   UserOutlined,
@@ -82,7 +86,8 @@ import {
   DownloadOutlined,
   PlusOutlined,
   LeftOutlined,
-  RightOutlined
+  RightOutlined,
+  SettingOutlined
 } from '@ant-design/icons-vue'
 import { useCalendarStore } from '../stores/calendar'
 import { useMessageStore } from '../stores/message'
@@ -96,8 +101,13 @@ import SubscribeModal from '../components/calendar/SubscribeModal.vue'
 import MessageBell from '../components/MessageBell.vue'
 import type { CalendarEvent } from '../types/calendar'
 
+const router = useRouter()
 const store = useCalendarStore()
 const messageStore = useMessageStore()
+
+const goToSystemConfig = () => {
+  router.push('/system/config')
+}
 
 const showEventModal = ref(false)
 const showExportModal = ref(false)

@@ -457,3 +457,52 @@ INSERT INTO sys_message (employee_id, employee_name, event_type, title, summary,
 (3, '王五', 'PERFORMANCE_REMIND', '绩效结果确认', '您Q2的绩效评估结果已出，请登录系统确认', 'PERFORMANCE', 'EVAL-10086', '/performance/result', 0, 0, DATE_SUB(NOW(), INTERVAL 4 HOUR)),
 (4, '赵六', 'ONBOARDING_OVERDUE', '入职清单逾期提醒', '新员工入职清单中有3项已逾期未完成，请及时跟进', 'ONBOARDING', 'OB-2026001', '/onboarding/checklist', 0, 0, DATE_SUB(NOW(), INTERVAL 6 HOUR)),
 (5, '钱七', 'SYSTEM', '系统维护通知', '系统将于本周六凌晨2:00-4:00进行维护升级，届时将暂停服务', 'SYSTEM', 'SYS-001', '/system/notice', 0, 0, DATE_SUB(NOW(), INTERVAL 10 HOUR));
+
+-- ============================================================
+-- 系统设置相关表
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS sys_config (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    config_group VARCHAR(50) NOT NULL COMMENT '配置分组: COMPANY_INFO, BUSINESS_RULES, SECURITY_POLICY, FEATURE_TOGGLE',
+    config_key VARCHAR(100) NOT NULL COMMENT '配置键',
+    config_value TEXT COMMENT '配置值',
+    value_type VARCHAR(20) NOT NULL DEFAULT 'STRING' COMMENT '值类型: STRING, INTEGER, BOOLEAN, NUMBER',
+    display_name VARCHAR(100) NOT NULL COMMENT '显示名称',
+    description VARCHAR(500) COMMENT '配置说明',
+    sort_order INT DEFAULT 0 COMMENT '排序',
+    updated_by VARCHAR(100) COMMENT '最后修改人',
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_group_key (config_group, config_key),
+    INDEX idx_group (config_group),
+    INDEX idx_key (config_key)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+INSERT INTO sys_config (config_group, config_key, config_value, value_type, display_name, description, sort_order, updated_by) VALUES
+('COMPANY_INFO', 'company_name', '示例科技有限公司', 'STRING', '公司名称', '公司全称', 1, 'system'),
+('COMPANY_INFO', 'company_logo', '', 'STRING', '公司Logo', '公司Logo图片URL地址', 2, 'system'),
+('COMPANY_INFO', 'company_domain', 'www.example.com', 'STRING', '公司域名', '公司官网域名', 3, 'system'),
+('BUSINESS_RULES', 'default_page_size', '10', 'INTEGER', '列表默认分页条数', '列表查询时默认每页显示条数', 1, 'system'),
+('BUSINESS_RULES', 'attendance_standard_time', '09:00', 'STRING', '考勤标准时间', '每日标准上班时间(HH:mm格式)', 2, 'system'),
+('BUSINESS_RULES', 'annual_leave_initial_days', '5', 'INTEGER', '年假初始天数', '新员工入职初始年假天数', 3, 'system'),
+('BUSINESS_RULES', 'contract_expiry_warning_days', '30', 'INTEGER', '合同到期预警天数', '劳动合同到期前多少天开始预警', 4, 'system'),
+('SECURITY_POLICY', 'session_timeout_minutes', '30', 'INTEGER', '会话超时时间(分钟)', '用户无操作后会话自动失效时间', 1, 'system'),
+('SECURITY_POLICY', 'password_complexity', 'MEDIUM', 'STRING', '密码复杂度', 'LOW:仅数字字母, MEDIUM:含大小写数字, HIGH:含特殊字符', 2, 'system'),
+('SECURITY_POLICY', 'login_lock_threshold', '5', 'INTEGER', '登录锁定阈值', '连续登录失败次数超过此值锁定账号', 3, 'system'),
+('FEATURE_TOGGLE', 'self_registration_enabled', 'false', 'BOOLEAN', '自助注册', '是否允许用户自助注册账号', 1, 'system'),
+('FEATURE_TOGGLE', 'email_notification_enabled', 'true', 'BOOLEAN', '邮件通知', '是否启用邮件通知功能', 2, 'system'),
+('FEATURE_TOGGLE', 'attachment_upload_enabled', 'true', 'BOOLEAN', '附件上传', '是否允许上传附件', 3, 'system');
+
+CREATE TABLE IF NOT EXISTS sys_config_history (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    config_group VARCHAR(50) NOT NULL COMMENT '配置分组',
+    config_key VARCHAR(100) NOT NULL COMMENT '配置键',
+    display_name VARCHAR(100) COMMENT '显示名称',
+    old_value TEXT COMMENT '变更前值',
+    new_value TEXT COMMENT '变更后值',
+    changed_by VARCHAR(100) NOT NULL COMMENT '变更人',
+    changed_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '变更时间',
+    INDEX idx_group (config_group),
+    INDEX idx_key (config_key),
+    INDEX idx_changed_at (changed_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
