@@ -213,3 +213,127 @@ INSERT INTO performance_dimension_config (dimension_name, dimension_code, descri
 ('工作能力', 'COMPETENCY', '专业技能、解决问题能力、学习能力', 30.00, 100, 1, 2),
 ('工作态度', 'ATTITUDE', '责任心、团队协作、主动性', 20.00, 100, 1, 3),
 ('价值观行为', 'VALUES', '企业文化认同、价值观践行', 10.00, 100, 1, 4);
+
+CREATE TABLE IF NOT EXISTS skill_tag (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    tag_name VARCHAR(100) NOT NULL COMMENT '标签名称',
+    category VARCHAR(50) NOT NULL COMMENT 'LANGUAGE:编程语言, FRAMEWORK:框架工具, SOFT_SKILL:软技能, CERTIFICATE:专业证书, DATABASE:数据库, DEVOPS:运维部署, OTHER:其他',
+    description TEXT COMMENT '标签说明',
+    heat_weight DECIMAL(10,2) DEFAULT 0 COMMENT '热度权重',
+    validation_cycle_days INT DEFAULT 365 COMMENT '验证周期(天)',
+    is_active TINYINT DEFAULT 1 COMMENT '是否启用',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_tag_name (tag_name),
+    INDEX idx_category (category),
+    INDEX idx_active (is_active)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS employee_skill (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    employee_id BIGINT NOT NULL,
+    employee_name VARCHAR(100),
+    department VARCHAR(100),
+    skill_tag_id BIGINT NOT NULL,
+    skill_tag_name VARCHAR(100),
+    category VARCHAR(50),
+    proficiency INT NOT NULL COMMENT '1:入门, 2:初级, 3:中级, 4:高级, 5:专家',
+    last_verified_date DATE COMMENT '最后验证日期',
+    is_expired TINYINT DEFAULT 0 COMMENT '是否过期',
+    evidence TEXT COMMENT '证明材料/备注',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_employee_skill (employee_id, skill_tag_id),
+    INDEX idx_employee (employee_id),
+    INDEX idx_skill_tag (skill_tag_id),
+    INDEX idx_department (department),
+    INDEX idx_proficiency (proficiency),
+    INDEX idx_expired (is_expired)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS skill_alias (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    alias_name VARCHAR(100) NOT NULL COMMENT '别名',
+    primary_tag_id BIGINT NOT NULL COMMENT '主标签ID',
+    primary_tag_name VARCHAR(100) COMMENT '主标签名称',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_alias_name (alias_name),
+    INDEX idx_primary_tag (primary_tag_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS skill_change_log (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    employee_id BIGINT NOT NULL,
+    employee_name VARCHAR(100),
+    skill_tag_id BIGINT NOT NULL,
+    skill_tag_name VARCHAR(100),
+    change_type VARCHAR(20) NOT NULL COMMENT 'ADD:新增, UPDATE:更新, REMOVE:移除',
+    old_proficiency INT COMMENT '变更前熟练度',
+    new_proficiency INT COMMENT '变更后熟练度',
+    old_last_verified_date DATE COMMENT '变更前验证日期',
+    new_last_verified_date DATE COMMENT '变更后验证日期',
+    change_reason VARCHAR(500) COMMENT '变更原因',
+    operator_id BIGINT COMMENT '操作人ID',
+    operator_name VARCHAR(100) COMMENT '操作人姓名',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_employee (employee_id),
+    INDEX idx_skill_tag (skill_tag_id),
+    INDEX idx_change_type (change_type),
+    INDEX idx_created_at (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+INSERT INTO skill_tag (tag_name, category, description, heat_weight, validation_cycle_days, is_active) VALUES
+('Java', 'LANGUAGE', 'Java编程语言', 15.00, 365, 1),
+('Python', 'LANGUAGE', 'Python编程语言', 12.00, 365, 1),
+('JavaScript', 'LANGUAGE', 'JavaScript编程语言', 14.00, 365, 1),
+('TypeScript', 'LANGUAGE', 'TypeScript编程语言', 10.00, 365, 1),
+('Go', 'LANGUAGE', 'Go编程语言', 8.00, 365, 1),
+('Spring Boot', 'FRAMEWORK', 'Spring Boot框架', 15.00, 365, 1),
+('Vue.js', 'FRAMEWORK', 'Vue.js前端框架', 13.00, 365, 1),
+('React', 'FRAMEWORK', 'React前端框架', 12.00, 365, 1),
+('MyBatis', 'FRAMEWORK', 'MyBatis持久层框架', 9.00, 365, 1),
+('MySQL', 'DATABASE', 'MySQL关系型数据库', 14.00, 365, 1),
+('Redis', 'DATABASE', 'Redis缓存数据库', 10.00, 365, 1),
+('MongoDB', 'DATABASE', 'MongoDB文档数据库', 6.00, 365, 1),
+('Docker', 'DEVOPS', 'Docker容器化技术', 10.00, 365, 1),
+('Kubernetes', 'DEVOPS', 'Kubernetes容器编排', 8.00, 365, 1),
+('沟通能力', 'SOFT_SKILL', '团队沟通与协作能力', 10.00, 730, 1),
+('项目管理', 'SOFT_SKILL', '项目规划与管理能力', 8.00, 730, 1),
+('团队协作', 'SOFT_SKILL', '团队合作与协调能力', 9.00, 730, 1),
+('PMP证书', 'CERTIFICATE', '项目管理专业人士资格认证', 5.00, 1095, 1),
+('AWS认证', 'CERTIFICATE', '亚马逊云服务认证', 6.00, 730, 1),
+('软考高级', 'CERTIFICATE', '计算机技术与软件专业技术资格(高级)', 4.00, 1095, 1);
+
+INSERT INTO employee_skill (employee_id, employee_name, department, skill_tag_id, skill_tag_name, category, proficiency, last_verified_date, is_expired, evidence) VALUES
+(1, '张三', '技术部', 1, 'Java', 'LANGUAGE', 4, '2026-03-15', 0, '参与多个Java后端项目开发'),
+(1, '张三', '技术部', 6, 'Spring Boot', 'FRAMEWORK', 5, '2026-03-15', 0, 'Spring Boot项目架构设计经验'),
+(1, '张三', '技术部', 9, 'MyBatis', 'FRAMEWORK', 4, '2026-03-15', 0, NULL),
+(1, '张三', '技术部', 10, 'MySQL', 'DATABASE', 4, '2026-03-15', 0, 'SQL优化经验'),
+(1, '张三', '技术部', 11, 'Redis', 'DATABASE', 3, '2026-03-15', 0, NULL),
+(1, '张三', '技术部', 15, '沟通能力', 'SOFT_SKILL', 4, '2026-01-10', 0, NULL),
+(2, '李四', '产品部', 15, '沟通能力', 'SOFT_SKILL', 5, '2026-02-20', 0, '跨部门协调经验丰富'),
+(2, '李四', '产品部', 16, '项目管理', 'SOFT_SKILL', 4, '2026-02-20', 0, NULL),
+(2, '李四', '产品部', 17, '团队协作', 'SOFT_SKILL', 5, '2026-02-20', 0, NULL),
+(2, '李四', '产品部', 18, 'PMP证书', 'CERTIFICATE', 5, '2025-06-01', 0, 'PMP认证编号:XXX'),
+(3, '王五', '设计部', 3, 'JavaScript', 'LANGUAGE', 3, '2026-01-10', 0, NULL),
+(3, '王五', '设计部', 7, 'Vue.js', 'FRAMEWORK', 3, '2026-01-10', 0, NULL),
+(3, '王五', '设计部', 17, '团队协作', 'SOFT_SKILL', 4, '2026-01-10', 0, NULL),
+(3, '王五', '设计部', 15, '沟通能力', 'SOFT_SKILL', 4, '2026-01-10', 0, NULL),
+(4, '赵六', '人力资源部', 15, '沟通能力', 'SOFT_SKILL', 5, '2026-03-05', 0, NULL),
+(4, '赵六', '人力资源部', 17, '团队协作', 'SOFT_SKILL', 5, '2026-03-05', 0, NULL),
+(4, '赵六', '人力资源部', 16, '项目管理', 'SOFT_SKILL', 3, '2026-03-05', 0, NULL),
+(5, '钱七', '技术部', 3, 'JavaScript', 'LANGUAGE', 5, '2026-02-01', 0, NULL),
+(5, '钱七', '技术部', 4, 'TypeScript', 'LANGUAGE', 4, '2026-02-01', 0, NULL),
+(5, '钱七', '技术部', 7, 'Vue.js', 'FRAMEWORK', 5, '2026-02-01', 0, 'Vue3项目开发经验'),
+(5, '钱七', '技术部', 8, 'React', 'FRAMEWORK', 3, '2025-12-01', 0, NULL),
+(5, '钱七', '技术部', 10, 'MySQL', 'DATABASE', 3, '2026-02-01', 0, NULL),
+(5, '钱七', '技术部', 13, 'Docker', 'DEVOPS', 3, '2026-02-01', 0, NULL),
+(5, '钱七', '技术部', 15, '沟通能力', 'SOFT_SKILL', 3, '2026-02-01', 0, NULL);
+
+INSERT INTO skill_alias (alias_name, primary_tag_id, primary_tag_name) VALUES
+('JDK', 1, 'Java'),
+('SpringBoot', 6, 'Spring Boot'),
+('Vue', 7, 'Vue.js'),
+('JS', 3, 'JavaScript'),
+('TS', 4, 'TypeScript'),
+('K8s', 14, 'Kubernetes');
