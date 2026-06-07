@@ -337,3 +337,80 @@ INSERT INTO skill_alias (alias_name, primary_tag_id, primary_tag_name) VALUES
 ('JS', 3, 'JavaScript'),
 ('TS', 4, 'TypeScript'),
 ('K8s', 14, 'Kubernetes');
+
+-- ============================================================
+-- 员工附件管理相关表
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS attachment_category (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    category_code VARCHAR(50) NOT NULL UNIQUE COMMENT '分类编码: LABOR_CONTRACT, ID_CARD, EDUCATION, CERTIFICATE, OTHER',
+    category_name VARCHAR(100) NOT NULL COMMENT '分类名称: 劳动合同, 身份证, 学历证明, 证书, 其他',
+    description TEXT COMMENT '分类说明',
+    sort_order INT DEFAULT 0 COMMENT '排序',
+    is_active TINYINT DEFAULT 1 COMMENT '是否启用',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+INSERT INTO attachment_category (category_code, category_name, description, sort_order, is_active) VALUES
+('LABOR_CONTRACT', '劳动合同', '员工劳动合同、聘用协议等', 1, 1),
+('ID_CARD', '身份证件', '身份证、护照等身份证明文件', 2, 1),
+('EDUCATION', '学历证明', '毕业证、学位证、学历认证报告等', 3, 1),
+('CERTIFICATE', '专业证书', '职业资格证、技能证书、培训证书等', 4, 1),
+('OTHER', '其他附件', '其他员工相关文件资料', 99, 1);
+
+CREATE TABLE IF NOT EXISTS employee_attachment (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    employee_id BIGINT NOT NULL COMMENT '员工ID',
+    employee_name VARCHAR(100) COMMENT '员工姓名',
+    department VARCHAR(100) COMMENT '所属部门',
+    attachment_group_id VARCHAR(64) NOT NULL COMMENT '附件组ID(同一分类同一员工的不同版本共用)',
+    category_id BIGINT NOT NULL COMMENT '分类ID',
+    category_code VARCHAR(50) NOT NULL COMMENT '分类编码(冗余)',
+    category_name VARCHAR(100) COMMENT '分类名称(冗余)',
+    file_name VARCHAR(255) NOT NULL COMMENT '文件原始名称',
+    stored_file_name VARCHAR(255) NOT NULL COMMENT '存储文件名(UUID)',
+    file_path VARCHAR(500) NOT NULL COMMENT '文件存储路径',
+    file_size BIGINT NOT NULL COMMENT '文件大小(字节)',
+    mime_type VARCHAR(100) NOT NULL COMMENT 'MIME类型',
+    file_extension VARCHAR(20) COMMENT '文件扩展名',
+    version INT NOT NULL DEFAULT 1 COMMENT '版本号',
+    is_latest TINYINT DEFAULT 1 COMMENT '是否为最新版本',
+    expire_date DATE COMMENT '有效期截止日期',
+    is_expired TINYINT DEFAULT 0 COMMENT '是否已过期',
+    expiry_reminder_sent TINYINT DEFAULT 0 COMMENT '是否已发送到期提醒',
+    uploader_id BIGINT COMMENT '上传人ID',
+    uploader_name VARCHAR(100) COMMENT '上传人姓名',
+    uploaded_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '上传时间',
+    description TEXT COMMENT '附件说明/备注',
+    is_deleted TINYINT DEFAULT 0 COMMENT '逻辑删除标记',
+    deleted_at DATETIME COMMENT '删除时间',
+    deleted_by BIGINT COMMENT '删除人ID',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_employee (employee_id),
+    INDEX idx_category (category_id),
+    INDEX idx_group (attachment_group_id),
+    INDEX idx_expire (expire_date),
+    INDEX idx_uploader (uploader_id),
+    INDEX idx_created (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS employee_storage_quota (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    employee_id BIGINT NOT NULL UNIQUE COMMENT '员工ID',
+    employee_name VARCHAR(100),
+    total_quota_bytes BIGINT NOT NULL DEFAULT 524288000 COMMENT '总配额(字节), 默认500MB',
+    used_bytes BIGINT NOT NULL DEFAULT 0 COMMENT '已使用空间(字节)',
+    max_single_file_bytes BIGINT NOT NULL DEFAULT 52428800 COMMENT '单文件最大限制(字节), 默认50MB',
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_employee (employee_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+INSERT INTO employee_storage_quota (employee_id, employee_name) VALUES
+(1, '张三'),
+(2, '李四'),
+(3, '王五'),
+(4, '赵六'),
+(5, '钱七');

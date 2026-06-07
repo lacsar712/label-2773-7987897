@@ -12,6 +12,11 @@ spring:
   jackson:
     time-zone: Asia/Shanghai
     date-format: yyyy-MM-dd HH:mm:ss
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 100MB
+      max-request-size: 100MB
 
 mybatis-plus:
   configuration:
@@ -23,3 +28,7 @@ springdoc:
     path: /v3/api-docs
   swagger-ui:
     path: /docs
+
+attachment:
+  storage:
+    path: ./attachments
