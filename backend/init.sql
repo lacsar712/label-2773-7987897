@@ -506,3 +506,56 @@ CREATE TABLE IF NOT EXISTS sys_config_history (
     INDEX idx_key (config_key),
     INDEX idx_changed_at (changed_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ============================================================
+-- 员工合同管理相关表
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS employee_contract (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    contract_no VARCHAR(50) NOT NULL UNIQUE COMMENT '合同编号',
+    employee_id BIGINT NOT NULL COMMENT '员工ID',
+    employee_name VARCHAR(100) COMMENT '员工姓名',
+    department VARCHAR(100) COMMENT '所属部门',
+    contract_type VARCHAR(30) NOT NULL COMMENT '合同类型: FIXED_TERM:固定期限, OPEN_ENDED:无固定期限, INTERNSHIP:实习, LABOR_SERVICE:劳务',
+    start_date DATE NOT NULL COMMENT '合同开始日期',
+    end_date DATE COMMENT '合同结束日期(无固定期限可为空)',
+    probation_start_date DATE COMMENT '试用期开始日期',
+    probation_end_date DATE COMMENT '试用期结束日期',
+    probation_salary_ratio DECIMAL(5,2) COMMENT '试用期薪资比例(如0.8表示80%)',
+    contract_status VARCHAR(30) NOT NULL DEFAULT 'DRAFT' COMMENT '签约状态: DRAFT:草稿, ACTIVE:生效, EXPIRED:到期, TERMINATED:终止, RENEWING:续签中',
+    sign_status VARCHAR(30) NOT NULL DEFAULT 'PENDING' COMMENT '电子签署状态: PENDING:待签, SIGNED:已签, REJECTED:拒签',
+    signed_date DATE COMMENT '签署日期',
+    reject_reason VARCHAR(500) COMMENT '拒签原因',
+    previous_contract_id BIGINT COMMENT '前序合同ID,用于续签关联形成链条',
+    termination_reason VARCHAR(500) COMMENT '终止原因',
+    termination_date DATE COMMENT '终止日期',
+    termination_operator_id BIGINT COMMENT '终止操作人ID',
+    termination_operator_name VARCHAR(100) COMMENT '终止操作人姓名',
+    is_offboarding_triggered TINYINT DEFAULT 0 COMMENT '是否已触发离职流程',
+    warning_30d_sent TINYINT DEFAULT 0 COMMENT '30天到期预警是否已发送',
+    warning_15d_sent TINYINT DEFAULT 0 COMMENT '15天到期预警是否已发送',
+    warning_7d_sent TINYINT DEFAULT 0 COMMENT '7天到期预警是否已发送',
+    remark TEXT COMMENT '备注',
+    created_by BIGINT COMMENT '创建人ID',
+    created_by_name VARCHAR(100) COMMENT '创建人姓名',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_employee (employee_id),
+    INDEX idx_contract_type (contract_type),
+    INDEX idx_contract_status (contract_status),
+    INDEX idx_sign_status (sign_status),
+    INDEX idx_start_date (start_date),
+    INDEX idx_end_date (end_date),
+    INDEX idx_previous (previous_contract_id),
+    INDEX idx_created (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+INSERT INTO employee_contract (contract_no, employee_id, employee_name, department, contract_type, start_date, end_date, probation_start_date, probation_end_date, probation_salary_ratio, contract_status, sign_status, signed_date, remark, created_by, created_by_name) VALUES
+('HT-GD-202303150001', 1, '张三', '技术部', 'FIXED_TERM', '2023-03-15', DATE_ADD(CURDATE(), INTERVAL 20 DAY), '2023-03-15', '2023-06-14', 0.80, 'ACTIVE', 'SIGNED', '2023-03-15', '3年固定期限劳动合同', 4, '赵六'),
+('HT-GD-202207200002', 2, '李四', '产品部', 'FIXED_TERM', '2022-07-20', DATE_ADD(CURDATE(), INTERVAL 45 DAY), '2022-07-20', '2022-10-19', 0.80, 'ACTIVE', 'SIGNED', '2022-07-20', '3年固定期限劳动合同', 4, '赵六'),
+('HT-GD-202401100003', 3, '王五', '设计部', 'FIXED_TERM', '2024-01-10', DATE_ADD(CURDATE(), INTERVAL 10 DAY), '2024-01-10', '2024-04-09', 0.80, 'ACTIVE', 'SIGNED', '2024-01-10', '3年固定期限劳动合同', 4, '赵六'),
+('HT-WG-202109050004', 4, '赵六', '人力资源部', 'OPEN_ENDED', '2021-09-05', NULL, '2021-09-05', '2021-12-04', 0.80, 'ACTIVE', 'SIGNED', '2021-09-05', '无固定期限劳动合同', 1, '张三'),
+('HT-GD-202306010005', 5, '钱七', '技术部', 'FIXED_TERM', '2023-06-01', DATE_ADD(CURDATE(), INTERVAL 60 DAY), '2023-06-01', '2023-08-31', 0.80, 'ACTIVE', 'SIGNED', '2023-06-01', '3年固定期限劳动合同', 4, '赵六'),
+('HT-GD-202003150006', 1, '张三', '技术部', 'FIXED_TERM', '2020-03-15', '2023-03-14', '2020-03-15', '2020-06-14', 0.80, 'EXPIRED', 'SIGNED', '2020-03-15', '3年固定期限劳动合同(已到期,已续签)', 4, '赵六'),
+('HT-SX-202506010007', 3, '王五', '设计部', 'INTERNSHIP', '2025-06-01', '2025-08-31', NULL, NULL, NULL, 'TERMINATED', 'SIGNED', '2025-06-01', '实习协议(已提前终止)', 4, '赵六');
