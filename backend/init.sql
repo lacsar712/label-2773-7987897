@@ -559,3 +559,113 @@ INSERT INTO employee_contract (contract_no, employee_id, employee_name, departme
 ('HT-GD-202306010005', 5, '钱七', '技术部', 'FIXED_TERM', '2023-06-01', DATE_ADD(CURDATE(), INTERVAL 60 DAY), '2023-06-01', '2023-08-31', 0.80, 'ACTIVE', 'SIGNED', '2023-06-01', '3年固定期限劳动合同', 4, '赵六'),
 ('HT-GD-202003150006', 1, '张三', '技术部', 'FIXED_TERM', '2020-03-15', '2023-03-14', '2020-03-15', '2020-06-14', 0.80, 'EXPIRED', 'SIGNED', '2020-03-15', '3年固定期限劳动合同(已到期,已续签)', 4, '赵六'),
 ('HT-SX-202506010007', 3, '王五', '设计部', 'INTERNSHIP', '2025-06-01', '2025-08-31', NULL, NULL, NULL, 'TERMINATED', 'SIGNED', '2025-06-01', '实习协议(已提前终止)', 4, '赵六');
+
+-- ============================================================
+-- 招聘候选人跟踪相关表
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS candidate (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL COMMENT '姓名',
+    phone VARCHAR(30) COMMENT '联系电话',
+    email VARCHAR(100) COMMENT '邮箱',
+    applied_position VARCHAR(100) COMMENT '应聘职位',
+    department VARCHAR(100) COMMENT '应聘部门',
+    source_channel VARCHAR(30) COMMENT '来源渠道: INTERNAL_REFERRAL, RECRUITMENT_WEBSITE, SOCIAL_MEDIA, CAMPUS_RECRUITMENT, HEADHUNTER, DIRECT_APPLICATION, OTHER',
+    expected_salary_min DECIMAL(12,2) COMMENT '期望薪资最低',
+    expected_salary_max DECIMAL(12,2) COMMENT '期望薪资最高',
+    resume_attachment_id BIGINT COMMENT '简历附件ID',
+    resume_attachment_name VARCHAR(255) COMMENT '简历附件名称',
+    referrer_id BIGINT COMMENT '内推人ID',
+    referrer_name VARCHAR(100) COMMENT '内推人姓名',
+    stage VARCHAR(30) NOT NULL DEFAULT 'RESUME_SCREENING' COMMENT '当前阶段: RESUME_SCREENING, WRITTEN_TEST, FIRST_INTERVIEW, SECOND_INTERVIEW, HR_INTERVIEW, OFFER_APPROVAL, HIRED, ELIMINATED',
+    is_in_talent_pool TINYINT DEFAULT 0 COMMENT '是否在人才库',
+    eliminate_reason VARCHAR(500) COMMENT '淘汰原因',
+    eliminate_time DATETIME COMMENT '淘汰时间',
+    offer_salary DECIMAL(12,2) COMMENT 'Offer薪资',
+    offer_start_date DATE COMMENT 'Offer入职日期',
+    offer_approval_status VARCHAR(20) COMMENT 'Offer审批状态: PENDING, APPROVED, REJECTED',
+    offer_approver_id BIGINT COMMENT 'Offer审批人ID',
+    offer_approver_name VARCHAR(100) COMMENT 'Offer审批人姓名',
+    offer_approval_time DATETIME COMMENT 'Offer审批时间',
+    converted_employee_id BIGINT COMMENT '转化后的员工ID',
+    created_by BIGINT COMMENT '创建人ID',
+    created_by_name VARCHAR(100) COMMENT '创建人姓名',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    remark TEXT COMMENT '备注',
+    INDEX idx_name (name),
+    INDEX idx_stage (stage),
+    INDEX idx_source (source_channel),
+    INDEX idx_position (applied_position),
+    INDEX idx_department (department),
+    INDEX idx_talent_pool (is_in_talent_pool),
+    INDEX idx_created (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS interview_record (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    candidate_id BIGINT NOT NULL COMMENT '候选人ID',
+    candidate_name VARCHAR(100) COMMENT '候选人姓名',
+    interview_round VARCHAR(30) NOT NULL COMMENT '面试轮次: WRITTEN_TEST, FIRST_INTERVIEW, SECOND_INTERVIEW, HR_INTERVIEW',
+    interviewer_id BIGINT COMMENT '面试官ID',
+    interviewer_name VARCHAR(100) COMMENT '面试官姓名',
+    interview_time DATETIME COMMENT '面试时间',
+    score DECIMAL(5,2) COMMENT '评分',
+    evaluation TEXT COMMENT '评价',
+    is_passed TINYINT COMMENT '是否通过',
+    created_by BIGINT COMMENT '创建人ID',
+    created_by_name VARCHAR(100) COMMENT '创建人姓名',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    remark TEXT COMMENT '备注',
+    INDEX idx_candidate (candidate_id),
+    INDEX idx_round (interview_round),
+    INDEX idx_interviewer (interviewer_id),
+    INDEX idx_time (interview_time)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS stage_transition_log (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    candidate_id BIGINT NOT NULL COMMENT '候选人ID',
+    candidate_name VARCHAR(100) COMMENT '候选人姓名',
+    from_stage VARCHAR(30) COMMENT '原阶段',
+    to_stage VARCHAR(30) NOT NULL COMMENT '目标阶段',
+    operator_id BIGINT COMMENT '操作人ID',
+    operator_name VARCHAR(100) COMMENT '操作人姓名',
+    transition_reason VARCHAR(500) COMMENT '流转原因',
+    transition_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '流转时间',
+    remark TEXT COMMENT '备注',
+    INDEX idx_candidate (candidate_id),
+    INDEX idx_from_stage (from_stage),
+    INDEX idx_to_stage (to_stage),
+    INDEX idx_operator (operator_id),
+    INDEX idx_transition_time (transition_time)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+INSERT INTO candidate (name, phone, email, applied_position, department, source_channel, expected_salary_min, expected_salary_max, referrer_id, referrer_name, stage, created_by, created_by_name, remark) VALUES
+('陈小明', '13800138001', 'chenxiaoming@example.com', '前端工程师', '技术部', 'INTERNAL_REFERRAL', 18000.00, 25000.00, 5, '钱七', 'RESUME_SCREENING', 4, '赵六', '有3年Vue开发经验'),
+('周小红', '13800138002', 'zhouxiaohong@example.com', '产品经理', '产品部', 'RECRUITMENT_WEBSITE', 20000.00, 28000.00, NULL, NULL, 'FIRST_INTERVIEW', 4, '赵六', '5年B端产品经验'),
+('吴大伟', '13800138003', 'wudawei@example.com', 'Java后端开发', '技术部', 'CAMPUS_RECRUITMENT', 15000.00, 20000.00, NULL, NULL, 'WRITTEN_TEST', 4, '赵六', '2026届硕士应届生'),
+('孙美丽', '13800138004', 'sunmeili@example.com', 'UI设计师', '设计部', 'SOCIAL_MEDIA', 16000.00, 22000.00, NULL, NULL, 'OFFER_APPROVAL', 4, '赵六', '设计作品集优秀，已通过HR面'),
+('李小龙', '13800138005', 'lixiaolong@example.com', '测试工程师', '技术部', 'HEADHUNTER', 18000.00, 25000.00, NULL, NULL, 'ELIMINATED', 4, '赵六', '技术能力不符合要求');
+
+UPDATE candidate SET is_in_talent_pool = 1, eliminate_reason = '技术能力不符合岗位要求，后续可关注其他岗位' WHERE name = '李小龙';
+
+INSERT INTO interview_record (candidate_id, candidate_name, interview_round, interviewer_id, interviewer_name, interview_time, score, evaluation, is_passed, created_by, created_by_name) VALUES
+(2, '周小红', 'FIRST_INTERVIEW', 2, '李四', DATE_SUB(NOW(), INTERVAL 1 DAY), 85.00, '产品思维清晰，沟通能力强，对B端业务理解深入', 1, 4, '赵六'),
+(3, '吴大伟', 'WRITTEN_TEST', 1, '张三', DATE_SUB(NOW(), INTERVAL 2 HOUR), 78.00, '算法题完成度较好，基础扎实', 1, 4, '赵六'),
+(4, '孙美丽', 'FIRST_INTERVIEW', 3, '王五', DATE_SUB(NOW(), INTERVAL 5 DAY), 90.00, '设计风格现代，作品集质量高', 1, 4, '赵六'),
+(4, '孙美丽', 'SECOND_INTERVIEW', 3, '王五', DATE_SUB(NOW(), INTERVAL 3 DAY), 88.00, '设计落地能力强，沟通顺畅', 1, 4, '赵六'),
+(4, '孙美丽', 'HR_INTERVIEW', 4, '赵六', DATE_SUB(NOW(), INTERVAL 1 DAY), 92.00, '综合素质好，文化匹配度高', 1, 4, '赵六');
+
+UPDATE candidate SET offer_salary = 20000.00, offer_start_date = '2026-07-01', offer_approval_status = 'PENDING' WHERE name = '孙美丽';
+
+INSERT INTO stage_transition_log (candidate_id, candidate_name, from_stage, to_stage, operator_id, operator_name, transition_reason, transition_time) VALUES
+(2, '周小红', 'RESUME_SCREENING', 'FIRST_INTERVIEW', 4, '赵六', '简历筛选通过，安排技术一面', DATE_SUB(NOW(), INTERVAL 2 DAY)),
+(3, '吴大伟', 'RESUME_SCREENING', 'WRITTEN_TEST', 4, '赵六', '简历筛选通过，安排笔试', DATE_SUB(NOW(), INTERVAL 1 DAY)),
+(4, '孙美丽', 'RESUME_SCREENING', 'FIRST_INTERVIEW', 4, '赵六', '简历筛选通过', DATE_SUB(NOW(), INTERVAL 7 DAY)),
+(4, '孙美丽', 'FIRST_INTERVIEW', 'SECOND_INTERVIEW', 4, '赵六', '一面通过', DATE_SUB(NOW(), INTERVAL 5 DAY)),
+(4, '孙美丽', 'SECOND_INTERVIEW', 'HR_INTERVIEW', 4, '赵六', '二面通过', DATE_SUB(NOW(), INTERVAL 3 DAY)),
+(4, '孙美丽', 'HR_INTERVIEW', 'OFFER_APPROVAL', 4, '赵六', 'HR面通过，发放Offer进入审批', DATE_SUB(NOW(), INTERVAL 1 DAY)),
+(5, '李小龙', 'RESUME_SCREENING', 'ELIMINATED', 4, '赵六', '技术能力不符合岗位要求', DATE_SUB(NOW(), INTERVAL 3 DAY));
