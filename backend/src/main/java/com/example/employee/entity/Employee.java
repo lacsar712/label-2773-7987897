@@ -36,4 +36,6 @@ public class Employee {
 
     @TableField("is_public_calendar")
     private Boolean isPublicCalendar;
+
+    private String phone;
 }
