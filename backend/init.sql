@@ -73,3 +73,143 @@ INSERT INTO calendar_subscription (subscriber_id, subscriber_name, target_employ
 (1, '张三', 2, '李四'),
 (1, '张三', 5, '钱七'),
 (2, '李四', 1, '张三');
+
+CREATE TABLE IF NOT EXISTS performance_batch (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    batch_name VARCHAR(200) NOT NULL COMMENT '评估批次名称',
+    cycle_type VARCHAR(20) NOT NULL COMMENT 'QUARTERLY:季度, SEMI_ANNUAL:半年度, ANNUAL:年度',
+    cycle_year INT NOT NULL COMMENT '评估年度',
+    cycle_quarter INT COMMENT '季度 1-4，仅季度评估使用',
+    department VARCHAR(100) COMMENT '部门，为空表示全公司',
+    start_date DATE NOT NULL COMMENT '评估周期开始日期',
+    end_date DATE NOT NULL COMMENT '评估周期结束日期',
+    self_eval_deadline DATETIME COMMENT '自评截止时间',
+    manager_review_deadline DATETIME COMMENT '主管评分截止时间',
+    hr_review_deadline DATETIME COMMENT 'HR复核截止时间',
+    status VARCHAR(30) NOT NULL DEFAULT 'SELF_EVALUATION' COMMENT 'SELF_EVALUATION, MANAGER_REVIEW, HR_REVIEW, CONFIRMED, ARCHIVED',
+    description TEXT COMMENT '评估说明',
+    created_by BIGINT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_cycle (cycle_year, cycle_type),
+    INDEX idx_department (department),
+    INDEX idx_status (status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS performance_evaluation (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    batch_id BIGINT NOT NULL,
+    employee_id BIGINT NOT NULL,
+    employee_name VARCHAR(100) NOT NULL,
+    department VARCHAR(100),
+    manager_id BIGINT COMMENT '主管ID',
+    manager_name VARCHAR(100) COMMENT '主管姓名',
+    stage VARCHAR(30) NOT NULL DEFAULT 'SELF_EVALUATION' COMMENT 'SELF_EVALUATION, MANAGER_REVIEW, HR_REVIEW, CONFIRMED, ARCHIVED',
+    self_score DECIMAL(5,2) COMMENT '自评分',
+    self_comment TEXT COMMENT '自评评语',
+    self_submitted_at DATETIME COMMENT '自评提交时间',
+    manager_score DECIMAL(5,2) COMMENT '主管评分',
+    final_grade VARCHAR(5) COMMENT 'S/A/B/C/D',
+    manager_comment TEXT COMMENT '主管评语',
+    improvement_plan TEXT COMMENT '改进计划',
+    manager_submitted_at DATETIME COMMENT '主管提交时间',
+    hr_comment TEXT COMMENT 'HR复核意见',
+    hr_reviewed_at DATETIME COMMENT 'HR复核时间',
+    salary_adjustment_suggestion VARCHAR(500) COMMENT '薪资调薪建议',
+    confirmed_at DATETIME COMMENT '结果确认时间',
+    is_locked TINYINT DEFAULT 0 COMMENT '是否已锁定归档',
+    rank_in_dept INT COMMENT '部门内排名',
+    potential_rating VARCHAR(20) COMMENT '潜力评级: LOW/MEDIUM/HIGH',
+    performance_rating VARCHAR(20) COMMENT '绩效评级: LOW/MEDIUM/HIGH',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_batch (batch_id),
+    INDEX idx_employee (employee_id),
+    INDEX idx_department (department),
+    INDEX idx_stage (stage),
+    INDEX idx_grade (final_grade)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS performance_dimension_config (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    dimension_name VARCHAR(100) NOT NULL COMMENT '维度名称',
+    dimension_code VARCHAR(50) NOT NULL UNIQUE COMMENT '维度编码',
+    description TEXT COMMENT '维度说明',
+    weight DECIMAL(5,2) COMMENT '权重',
+    max_score DECIMAL(5,2) DEFAULT 100 COMMENT '最高分',
+    is_active TINYINT DEFAULT 1 COMMENT '是否启用',
+    sort_order INT DEFAULT 0 COMMENT '排序',
+    INDEX idx_active (is_active)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS performance_dimension_score (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    evaluation_id BIGINT NOT NULL,
+    dimension_name VARCHAR(100) NOT NULL,
+    dimension_code VARCHAR(50) NOT NULL,
+    weight DECIMAL(5,2) COMMENT '权重',
+    self_score DECIMAL(5,2) COMMENT '自评分',
+    manager_score DECIMAL(5,2) COMMENT '主管评分',
+    self_comment TEXT COMMENT '自评说明',
+    manager_comment TEXT COMMENT '主管评分说明',
+    INDEX idx_evaluation (evaluation_id),
+    INDEX idx_dimension (dimension_code)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS performance_appeal (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    evaluation_id BIGINT NOT NULL,
+    employee_id BIGINT NOT NULL,
+    employee_name VARCHAR(100) NOT NULL,
+    appeal_reason VARCHAR(500) NOT NULL COMMENT '申诉原因',
+    appeal_detail TEXT COMMENT '申诉详情',
+    status VARCHAR(20) NOT NULL DEFAULT 'PENDING' COMMENT 'PENDING, APPROVED, REJECTED, CANCELLED',
+    reviewer_id BIGINT COMMENT '审核人ID',
+    reviewer_name VARCHAR(100) COMMENT '审核人姓名',
+    review_comment TEXT COMMENT '审核意见',
+    reviewed_at DATETIME COMMENT '审核时间',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_evaluation (evaluation_id),
+    INDEX idx_employee (employee_id),
+    INDEX idx_status (status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS calibration_meeting (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    batch_id BIGINT NOT NULL,
+    department VARCHAR(100),
+    meeting_name VARCHAR(200) NOT NULL,
+    meeting_date DATETIME,
+    participants TEXT COMMENT '参会人员',
+    meeting_notes TEXT COMMENT '会议纪要',
+    created_by BIGINT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_batch (batch_id),
+    INDEX idx_department (department)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS calibration_adjustment (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    meeting_id BIGINT NOT NULL,
+    evaluation_id BIGINT NOT NULL,
+    employee_id BIGINT NOT NULL,
+    employee_name VARCHAR(100) NOT NULL,
+    original_grade VARCHAR(5) COMMENT '校准前等级',
+    original_score DECIMAL(5,2) COMMENT '校准前分数',
+    original_rank INT COMMENT '校准前排名',
+    adjusted_grade VARCHAR(5) COMMENT '校准后等级',
+    adjusted_score DECIMAL(5,2) COMMENT '校准后分数',
+    adjusted_rank INT COMMENT '校准后排名',
+    adjustment_reason TEXT COMMENT '调整原因',
+    adjusted_by BIGINT COMMENT '调整人',
+    adjusted_at DATETIME COMMENT '调整时间',
+    INDEX idx_meeting (meeting_id),
+    INDEX idx_evaluation (evaluation_id),
+    INDEX idx_employee (employee_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+INSERT INTO performance_dimension_config (dimension_name, dimension_code, description, weight, max_score, is_active, sort_order) VALUES
+('工作业绩', 'PERFORMANCE', '工作目标完成情况、关键成果产出', 40.00, 100, 1, 1),
+('工作能力', 'COMPETENCY', '专业技能、解决问题能力、学习能力', 30.00, 100, 1, 2),
+('工作态度', 'ATTITUDE', '责任心、团队协作、主动性', 20.00, 100, 1, 3),
+('价值观行为', 'VALUES', '企业文化认同、价值观践行', 10.00, 100, 1, 4);
