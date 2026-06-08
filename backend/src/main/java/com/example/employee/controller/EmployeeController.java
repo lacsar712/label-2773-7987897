@@ -19,26 +19,26 @@ public class EmployeeController {
 
     @GetMapping
     public Result<List<Employee>> getAll() {
-        return Result.success(employeeService.list());
+        return Result.success(employeeService.listEmployees());
     }
 
     @GetMapping("/{id}")
     public Result<Employee> getById(@PathVariable Long id) {
-        return Result.success(employeeService.getById(id));
+        return Result.success(employeeService.getEmployeeById(id));
     }
 
     @PostMapping
     public Result<Boolean> create(@RequestBody @Valid Employee employee) {
-        return Result.success(employeeService.save(employee));
+        return Result.success(employeeService.createEmployee(employee));
     }
 
     @PutMapping
     public Result<Boolean> update(@RequestBody @Valid Employee employee) {
-        return Result.success(employeeService.updateById(employee));
+        return Result.success(employeeService.updateEmployee(employee));
     }
 
     @DeleteMapping("/{id}")
     public Result<Boolean> delete(@PathVariable Long id) {
-        return Result.success(employeeService.removeById(id));
+        return Result.success(employeeService.deleteEmployee(id));
     }
 }

@@ -16,6 +16,7 @@ import com.example.employee.entity.schedule.ShiftDefinition;
 import com.example.employee.mapper.EmployeeMapper;
 import com.example.employee.mapper.schedule.EmployeeScheduleMapper;
 import com.example.employee.mapper.schedule.ScheduleChangeLogMapper;
+import com.example.employee.service.EmployeeService;
 import com.example.employee.vo.ScheduleAlertVO;
 import com.example.employee.vo.ScheduleCellVO;
 import com.example.employee.vo.ScheduleEmployeeRowVO;
@@ -44,6 +45,9 @@ public class EmployeeScheduleService extends ServiceImpl<EmployeeScheduleMapper,
 
     @Autowired
     private EmployeeMapper employeeMapper;
+
+    @Autowired
+    private EmployeeService employeeService;
 
     @Autowired
     private ShiftDefinitionService shiftDefinitionService;
@@ -261,15 +265,17 @@ public class EmployeeScheduleService extends ServiceImpl<EmployeeScheduleMapper,
     @Transactional
     public int batchUpdateSchedules(ScheduleBatchUpdateDTO dto, Long operatorId, String operatorName) {
         List<Long> employeeIds = dto.getEmployeeIds();
+        Map<Long, Employee> employeeMap;
         if (employeeIds == null || employeeIds.isEmpty()) {
             LambdaQueryWrapper<Employee> empWrapper = new LambdaQueryWrapper<>();
             if (dto.getDepartment() != null && !dto.getDepartment().isEmpty()) {
                 empWrapper.eq(Employee::getDepartment, dto.getDepartment());
             }
-            if (dto.getTeamGroup() != null && !dto.getTeamGroup().isEmpty()) {
-            }
             List<Employee> emps = employeeMapper.selectList(empWrapper);
             employeeIds = emps.stream().map(Employee::getId).collect(Collectors.toList());
+            employeeMap = emps.stream().collect(Collectors.toMap(Employee::getId, e -> e));
+        } else {
+            employeeMap = employeeService.getEmployeeMapByIds(employeeIds);
         }
 
         List<LocalDate> dates = dto.getDates();
@@ -290,7 +296,7 @@ public class EmployeeScheduleService extends ServiceImpl<EmployeeScheduleMapper,
 
         int count = 0;
         for (Long empId : employeeIds) {
-            Employee emp = employeeMapper.selectById(empId);
+            Employee emp = employeeMap.get(empId);
             if (emp == null) continue;
 
             for (LocalDate date : dates) {

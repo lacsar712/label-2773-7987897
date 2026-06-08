@@ -91,10 +91,24 @@ public class EmployeeSkillService extends ServiceImpl<EmployeeSkillMapper, Emplo
             employees = employeeService.list();
         }
 
+        List<Long> employeeIds = employees.stream().map(Employee::getId).collect(Collectors.toList());
+        Map<Long, List<EmployeeSkill>> employeeSkillsMap;
+        if (employeeIds.isEmpty()) {
+            employeeSkillsMap = Collections.emptyMap();
+        } else {
+            LambdaQueryWrapper<EmployeeSkill> skillWrapper = new LambdaQueryWrapper<>();
+            skillWrapper.in(EmployeeSkill::getEmployeeId, employeeIds);
+            List<EmployeeSkill> allSkills = list(skillWrapper);
+            employeeSkillsMap = allSkills.stream()
+                    .collect(Collectors.groupingBy(EmployeeSkill::getEmployeeId));
+        }
+
+        Map<Long, SkillTag> skillTagMap = skillTagService.getSkillTagMapByIds(skillReqMap.keySet());
+
         List<CandidateMatchVO> candidates = new ArrayList<>();
 
         for (Employee emp : employees) {
-            List<EmployeeSkill> empSkills = listByEmployeeId(emp.getId());
+            List<EmployeeSkill> empSkills = employeeSkillsMap.getOrDefault(emp.getId(), Collections.emptyList());
             Map<Long, EmployeeSkill> empSkillMap = empSkills.stream()
                     .collect(Collectors.toMap(EmployeeSkill::getSkillTagId, s -> s, (a, b) -> a));
 
@@ -109,7 +123,7 @@ public class EmployeeSkillService extends ServiceImpl<EmployeeSkillMapper, Emplo
                 EmployeeSkill empSkill = empSkillMap.get(tagId);
 
                 CandidateMatchVO.SkillMatchDetail detail = new CandidateMatchVO.SkillMatchDetail();
-                SkillTag tag = skillTagService.getById(tagId);
+                SkillTag tag = skillTagMap.get(tagId);
                 detail.setSkillTagId(tagId);
                 detail.setSkillTagName(tag != null ? tag.getTagName() : "Unknown");
                 detail.setRequiredProficiency(minProf);
@@ -169,11 +183,18 @@ public class EmployeeSkillService extends ServiceImpl<EmployeeSkillMapper, Emplo
         List<EmployeeSkill> allSkills = list();
         LocalDate today = LocalDate.now();
 
+        List<Long> tagIds = allSkills.stream()
+                .map(EmployeeSkill::getSkillTagId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<Long, SkillTag> skillTagMap = skillTagService.getSkillTagMapByIds(tagIds);
+
         for (EmployeeSkill skill : allSkills) {
             if (skill.getLastVerifiedDate() == null) {
                 continue;
             }
-            SkillTag tag = skillTagService.getById(skill.getSkillTagId());
+            SkillTag tag = skillTagMap.get(skill.getSkillTagId());
             int cycleDays = (tag != null && tag.getValidationCycleDays() != null) ? tag.getValidationCycleDays() : 365;
             long daysSinceVerified = ChronoUnit.DAYS.between(skill.getLastVerifiedDate(), today);
             boolean expired = daysSinceVerified > cycleDays;

@@ -15,7 +15,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class SkillTagService extends ServiceImpl<SkillTagMapper, SkillTag> {
@@ -100,5 +104,14 @@ public class SkillTagService extends ServiceImpl<SkillTagMapper, SkillTag> {
             tag.setUpdatedAt(LocalDateTime.now());
             updateById(tag);
         }
+    }
+
+    public Map<Long, SkillTag> getSkillTagMapByIds(Collection<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        List<SkillTag> tags = this.listByIds(ids);
+        return tags.stream()
+                .collect(Collectors.toMap(SkillTag::getId, t -> t));
     }
 }
