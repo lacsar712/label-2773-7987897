@@ -7,8 +7,11 @@ import {
   SettingOutlined,
   TeamOutlined,
   MenuFoldOutlined,
-  MenuUnfoldOutlined
+  MenuUnfoldOutlined,
+  LogoutOutlined,
+  UserOutlined
 } from '@ant-design/icons-vue'
+import { Dropdown, message } from 'ant-design-vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -20,6 +23,12 @@ const menuItems = computed(() => [
     icon: CalendarOutlined,
     label: '团队日历',
     path: '/'
+  },
+  {
+    key: 'employees',
+    icon: TeamOutlined,
+    label: '员工管理',
+    path: '/employees'
   },
   {
     key: 'schedule',
@@ -36,6 +45,7 @@ const menuItems = computed(() => [
 ])
 
 const selectedKey = computed(() => {
+  if (route.path.startsWith('/employees')) return 'employees'
   if (route.path.startsWith('/schedule')) return 'schedule'
   if (route.path.startsWith('/system')) return 'config'
   return 'home'
@@ -49,10 +59,31 @@ const handleMenuClick = (e: { key: string }) => {
 }
 
 const isSchedulePage = computed(() => route.path.startsWith('/schedule'))
+const isLoginPage = computed(() => route.path.startsWith('/login'))
+
+const username = computed(() => localStorage.getItem('username') || '用户')
+
+const userMenuItems = [
+  {
+    key: 'logout',
+    icon: LogoutOutlined,
+    label: '退出登录'
+  }
+]
+
+const handleUserMenuClick = ({ key }: { key: string }) => {
+  if (key === 'logout') {
+    localStorage.removeItem('isLoggedIn')
+    localStorage.removeItem('username')
+    message.success('已退出登录')
+    router.push('/login')
+  }
+}
 </script>
 
 <template>
-  <a-layout class="app-layout" style="min-height: 100vh">
+  <RouterView v-if="isLoginPage" />
+  <a-layout v-else class="app-layout" style="min-height: 100vh">
     <a-layout-sider
       v-if="!isSchedulePage"
       v-model:collapsed="collapsed"
@@ -82,6 +113,16 @@ const isSchedulePage = computed(() => route.path.startsWith('/schedule'))
       </div>
     </a-layout-sider>
     <a-layout>
+      <a-layout-header class="app-header" v-if="!isSchedulePage">
+        <div class="header-right">
+          <a-dropdown :menu="{ items: userMenuItems, onClick: handleUserMenuClick }" placement="bottomRight">
+            <a class="user-info" data-testid="user-menu">
+              <UserOutlined />
+              <span>{{ username }}</span>
+            </a>
+          </a-dropdown>
+        </div>
+      </a-layout-header>
       <a-layout-content class="app-content">
         <RouterView />
       </a-layout-content>
@@ -132,8 +173,39 @@ const isSchedulePage = computed(() => route.path.startsWith('/schedule'))
   }
 }
 
+.app-header {
+  background: #fff;
+  padding: 0 24px;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  height: 56px;
+  border-bottom: 1px solid #f0f0f0;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  color: #333;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background: #f5f5f5;
+  }
+}
+
 .app-content {
   padding: 0;
-  min-height: 100vh;
+  min-height: calc(100vh - 56px);
 }
 </style>
