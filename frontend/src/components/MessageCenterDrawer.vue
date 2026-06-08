@@ -1,21 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
-import {
-  Drawer,
-  Tabs,
-  List,
-  Avatar,
-  Button,
-  Checkbox,
-  Space,
-  Empty,
-  Tag,
-  Tooltip,
-  Modal,
-  Switch,
-  Select,
-  Pagination
-} from 'ant-design-vue'
+import { Modal } from 'ant-design-vue'
 import {
   SettingOutlined,
   CheckCircleOutlined,

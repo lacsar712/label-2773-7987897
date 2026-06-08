@@ -2,7 +2,7 @@ import axios, { type AxiosRequestConfig } from 'axios'
 import { message } from 'ant-design-vue'
 
 const service = axios.create({
-  baseURL: 'http://localhost:8080',
+  baseURL: '',
   timeout: 15000
 })
 

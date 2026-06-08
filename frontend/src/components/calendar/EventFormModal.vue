@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
-import { Modal, Form, Input, Select, DatePicker, Switch, InputNumber, message } from 'ant-design-vue'
+import { Modal, Form, Input, Select, DatePicker, Switch, message } from 'ant-design-vue'
 import type { CalendarEvent } from '../../types/calendar'
 import { useCalendarStore } from '../../stores/calendar'
 import dayjs from 'dayjs'
@@ -93,8 +93,15 @@ const handleSubmit = async () => {
   }
 }
 
-const disabledStartDate = (current: any) => {
+const disabledStartDate = (_current: any) => {
   return false
+}
+
+const handleEmployeeChange = (val: unknown) => {
+  const employeeId = typeof val === 'number' ? val : undefined
+  const emp = store.employees.find(e => e.id === employeeId)
+  formState.value.employeeName = emp?.name || ''
+  formState.value.department = emp?.department || ''
 }
 </script>
 
@@ -115,7 +122,7 @@ const disabledStartDate = (current: any) => {
         name="title"
         :rules="[{ required: true, message: '请输入事件标题' }]"
       >
-        <Input v-model:value="formState.title" placeholder="请输入事件标题" maxlength="200" />
+        <Input v-model:value="formState.title" placeholder="请输入事件标题" :maxlength="200" />
       </Form.Item>
 
       <div style="display: flex; gap: 12px">
@@ -174,11 +181,7 @@ const disabledStartDate = (current: any) => {
             v-model:value="formState.employeeId"
             allow-clear
             :options="store.employees.map(e => ({ value: e.id, label: e.name + ' - ' + e.department }))"
-            @change="(val: number) => {
-              const emp = store.employees.find(e => e.id === val)
-              formState.employeeName = emp?.name || ''
-              formState.department = emp?.department || ''
-            }"
+            @change="handleEmployeeChange"
             placeholder="选择相关员工（可选）"
           />
         </Form.Item>
@@ -196,7 +199,7 @@ const disabledStartDate = (current: any) => {
           v-model:value="formState.description"
           placeholder="请输入事件描述（可选）"
           :rows="3"
-          maxlength="1000"
+          :maxlength="1000"
           show-count
         />
       </Form.Item>

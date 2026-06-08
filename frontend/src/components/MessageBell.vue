@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { BellOutlined } from '@ant-design/icons-vue'
-import { Badge, Dropdown, List, Avatar, Button, Popover } from 'ant-design-vue'
+import { Popover } from 'ant-design-vue'
 import dayjs from 'dayjs'
 import { useMessageStore } from '../stores/message'
 import type { MessageVO } from '../types/message'

@@ -42,7 +42,7 @@ const weekDays = computed<WeekDay[]>(() => {
       date: d,
       dateStr,
       label: `${d.getMonth() + 1}/${d.getDate()}`,
-      dayOfWeek: dayLabels[i],
+      dayOfWeek: dayLabels[i] ?? '',
       isToday: dateStr === todayStr,
       events: dayEvents
     })

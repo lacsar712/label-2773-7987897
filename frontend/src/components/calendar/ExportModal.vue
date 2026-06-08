@@ -14,8 +14,6 @@ const emit = defineEmits<{
   (e: 'update:visible', v: boolean): void
 }>()
 
-const formRef = ref()
-
 const defaultRange = computed(() => {
   const d = store.currentDate
   const start = dayjs(new Date(d.getFullYear(), d.getMonth(), 1))
@@ -66,7 +64,7 @@ const handleOk = async () => {
     cancel-text="取消"
     width="480"
   >
-    <Form ref="formRef" layout="vertical" :model="formState">
+    <Form layout="vertical" :model="formState">
       <Form.Item label="日历名称">
         <Input v-model:value="formState.calendarName" placeholder="团队日历" />
       </Form.Item>

@@ -153,7 +153,7 @@
             </a-button>
           </div>
           <a-table :columns="shiftColumns" :data-source="shifts" :pagination="false" bordered>
-            <template #bodyCell="{ column, record, text }">
+            <template #bodyCell="{ column, record }">
               <template v-if="column.key === 'color'">
                 <span class="color-demo" :style="{ backgroundColor: record.color }"></span>
                 {{ record.color }}
@@ -309,7 +309,7 @@
       v-model:open="showBatchFillModal"
       title="批量填充排班"
       @ok="handleBatchFill"
-      :ok-text="确定填充"
+      ok-text="确定填充"
     >
       <a-form :model="batchForm" layout="vertical">
         <a-form-item label="填充范围" required>
@@ -461,8 +461,7 @@ import type {
   ScheduleCell,
   ScheduleAlert,
   ScheduleChangeLog,
-  AttendanceCompare,
-  ShiftDefinitionDTO
+  AttendanceCompare
 } from '../types/schedule'
 
 dayjs.extend(isoWeek)

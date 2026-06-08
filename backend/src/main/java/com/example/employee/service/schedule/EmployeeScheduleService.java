@@ -516,7 +516,7 @@ public class EmployeeScheduleService extends ServiceImpl<EmployeeScheduleMapper,
         if (scheduleWeek != null && !scheduleWeek.isEmpty()) {
             wrapper.eq(EmployeeSchedule::getScheduleWeek, scheduleWeek);
         }
-        if (department != null && !department.getDepartment().isEmpty()) {
+        if (department != null && !department.isEmpty()) {
             wrapper.eq(EmployeeSchedule::getDepartment, department);
         }
         wrapper.eq(EmployeeSchedule::getStatus, ScheduleStatus.CONFIRMED.name());

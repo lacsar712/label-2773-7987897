@@ -10,6 +10,7 @@ import com.example.employee.entity.attachment.EmployeeAttachment;
 import com.example.employee.mapper.attachment.EmployeeAttachmentMapper;
 import com.example.employee.service.EmployeeService;
 import com.example.employee.vo.AttachmentGroupVO;
+import com.example.employee.vo.AttachmentVersionVO;
 import com.example.employee.vo.AttachmentVO;
 import com.example.employee.vo.ExpiringAttachmentVO;
 import org.springframework.beans.BeanUtils;
@@ -201,9 +202,9 @@ public class EmployeeAttachmentService extends ServiceImpl<EmployeeAttachmentMap
             groupVO.setCategoryCode(first.getCategoryCode());
             groupVO.setCategoryName(first.getCategoryName());
 
-            List<com.example.employee.vo.AttachmentVersionVO> versionVOs = entry.getValue().stream()
+            List<AttachmentVersionVO> versionVOs = entry.getValue().stream()
                     .map(a -> {
-                        com.example.employee.vo.AttachmentVersionVO v = new com.example.employee.vo.AttachmentVersionVO();
+                        AttachmentVersionVO v = new AttachmentVersionVO();
                         BeanUtils.copyProperties(a, v);
                         return v;
                     }).collect(Collectors.toList());

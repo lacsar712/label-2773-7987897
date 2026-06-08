@@ -13,7 +13,7 @@ const emit = defineEmits<{
   (e: 'update:visible', v: boolean): void
 }>()
 
-const selectedId = ref<number | null>(null)
+const selectedId = ref<number | undefined>(undefined)
 
 const availableEmployees = computed(() => {
   const subscribedIds = new Set(store.subscriptions.map(s => s.targetEmployeeId))
@@ -31,7 +31,7 @@ const handleOk = async () => {
   if (emp) {
     await store.addSubscription(emp.id, emp.name)
     message.success(`已订阅 ${emp.name} 的日历`)
-    selectedId.value = null
+    selectedId.value = undefined
     emit('update:visible', false)
   }
 }

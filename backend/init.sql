@@ -11,7 +11,8 @@ CREATE TABLE IF NOT EXISTS employee (
     department VARCHAR(100) NOT NULL,
     role VARCHAR(100) NOT NULL,
     hire_date DATE,
-    is_public_calendar TINYINT DEFAULT 1
+    is_public_calendar TINYINT DEFAULT 1,
+    phone VARCHAR(30) COMMENT '手机号'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 INSERT INTO employee (name, email, department, role, hire_date, is_public_calendar) VALUES 
@@ -856,3 +857,13 @@ INSERT INTO employee_schedule (schedule_week, department, employee_id, employee_
 ('2026-23', '人力资源部', 4, '赵六', NULL, '2026-06-12', 8, 'MORNING', '早班', '2026-06-08', '2026-06-12', 'DRAFT', 1, '张三'),
 ('2026-23', '人力资源部', 4, '赵六', NULL, '2026-06-13', 9, 'REST', '休息', '2026-06-08', '2026-06-14', 'DRAFT', 1, '张三'),
 ('2026-23', '人力资源部', 4, '赵六', NULL, '2026-06-14', 9, 'REST', '休息', '2026-06-08', '2026-06-14', 'DRAFT', 1, '张三');
+
+-- 结构升级：为已有 employee 表补充 phone 字段（新库 CREATE TABLE 已包含）
+SET @col_exists = (
+    SELECT COUNT(*) FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'employee' AND COLUMN_NAME = 'phone'
+);
+SET @ddl = IF(@col_exists = 0, 'ALTER TABLE employee ADD COLUMN phone VARCHAR(30) COMMENT ''手机号'' AFTER is_public_calendar', 'SELECT 1');
+PREPARE stmt FROM @ddl;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;

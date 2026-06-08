@@ -6,6 +6,7 @@ import com.example.employee.dto.SkillTagDTO;
 import com.example.employee.entity.skill.SkillAlias;
 import com.example.employee.entity.skill.SkillCategory;
 import com.example.employee.entity.skill.SkillTag;
+import com.example.employee.mapper.skill.SkillAliasMapper;
 import com.example.employee.mapper.skill.SkillTagMapper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,7 +21,7 @@ import java.util.List;
 public class SkillTagService extends ServiceImpl<SkillTagMapper, SkillTag> {
 
     @Autowired
-    private SkillAliasService skillAliasService;
+    private SkillAliasMapper skillAliasMapper;
 
     public List<SkillTag> listByCategory(SkillCategory category) {
         LambdaQueryWrapper<SkillTag> wrapper = new LambdaQueryWrapper<>();
@@ -40,11 +41,17 @@ public class SkillTagService extends ServiceImpl<SkillTagMapper, SkillTag> {
             return tag;
         }
 
-        SkillAlias alias = skillAliasService.findByAliasName(name);
+        SkillAlias alias = findAliasByName(name);
         if (alias != null) {
             return getById(alias.getPrimaryTagId());
         }
         return null;
+    }
+
+    private SkillAlias findAliasByName(String aliasName) {
+        LambdaQueryWrapper<SkillAlias> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(SkillAlias::getAliasName, aliasName);
+        return skillAliasMapper.selectOne(wrapper);
     }
 
     @Transactional

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, h } from 'vue';
 import { useRouter } from 'vue-router';
 import {
   Form,
@@ -69,6 +69,13 @@ const getFormData = (groupCode: string) => {
 };
 
 const formDataMap = ref<Record<string, Record<string, any>>>({});
+
+const getGroupFormData = (groupCode: string) => {
+  if (!formDataMap.value[groupCode]) {
+    formDataMap.value[groupCode] = {};
+  }
+  return formDataMap.value[groupCode];
+};
 
 const currentGroup = computed(() => {
   return groups.value.find(g => g.configGroup === activeTab.value);
@@ -224,9 +231,8 @@ const historyColumns = [
     dataIndex: 'configGroup',
     key: 'configGroup',
     width: 120,
-    customRender: ({ record }: any) => (
-      <Tag color="blue">{groupDisplayNameMap[record.configGroup] || record.configGroup}</Tag>
-    )
+    customRender: ({ record }: any) =>
+      h(Tag, { color: 'blue' }, () => groupDisplayNameMap[record.configGroup] || record.configGroup)
   },
   {
     title: '配置项',
@@ -239,18 +245,16 @@ const historyColumns = [
     dataIndex: 'oldValue',
     key: 'oldValue',
     width: 180,
-    customRender: ({ record }: any) => (
-      <span style="color: #ff4d4f;">{record.oldValue || '(空)'}</span>
-    )
+    customRender: ({ record }: any) =>
+      h('span', { style: { color: '#ff4d4f' } }, record.oldValue || '(空)')
   },
   {
     title: '变更后',
     dataIndex: 'newValue',
     key: 'newValue',
     width: 180,
-    customRender: ({ record }: any) => (
-      <span style="color: #52c41a;">{record.newValue || '(空)'}</span>
-    )
+    customRender: ({ record }: any) =>
+      h('span', { style: { color: '#52c41a' } }, record.newValue || '(空)')
   },
   {
     title: '变更人',
@@ -275,14 +279,16 @@ onMounted(() => {
   <div class="system-config-container">
     <div class="page-header">
       <div class="header-left">
-        <Button icon={<ArrowLeftOutlined />} @click="goBack" style="margin-right: 12px;">
+        <Button @click="goBack" style="margin-right: 12px;">
+          <template #icon><ArrowLeftOutlined /></template>
           返回
         </Button>
         <SettingOutlined class="header-icon" />
         <h2>系统设置</h2>
       </div>
       <Space>
-        <Button icon={<HistoryOutlined />} @click="openHistoryModal()">
+        <Button @click="openHistoryModal()">
+          <template #icon><HistoryOutlined /></template>
           变更历史
         </Button>
       </Space>
@@ -295,8 +301,10 @@ onMounted(() => {
         size="large"
         class="config-tabs"
       >
-        <template v-for="group in groups" :key="group.configGroup">
-          <Tabs.TabPane :key="group.configGroup">
+        <Tabs.TabPane
+          v-for="group in groups"
+          :key="group.configGroup"
+        >
             <template #tab>
               <span class="tab-label">{{ group.displayName }}</span>
             </template>
@@ -325,7 +333,7 @@ onMounted(() => {
                   >
                     <template v-if="config.valueType === 'INTEGER'">
                       <InputNumber
-                        v-model:value="formDataMap[group.configGroup]?.[config.configKey]"
+                        v-model:value="getGroupFormData(group.configGroup)[config.configKey]"
                         :min="0"
                         style="width: 200px"
                         :placeholder="`请输入${config.displayName}`"
@@ -333,7 +341,7 @@ onMounted(() => {
                     </template>
                     <template v-else-if="config.valueType === 'NUMBER'">
                       <InputNumber
-                        v-model:value="formDataMap[group.configGroup]?.[config.configKey]"
+                        v-model:value="getGroupFormData(group.configGroup)[config.configKey]"
                         :min="0"
                         :step="0.01"
                         style="width: 200px"
@@ -342,14 +350,14 @@ onMounted(() => {
                     </template>
                     <template v-else-if="config.valueType === 'BOOLEAN'">
                       <Switch
-                        v-model:checked="formDataMap[group.configGroup]?.[config.configKey]"
+                        v-model:checked="getGroupFormData(group.configGroup)[config.configKey]"
                         checked-children="开启"
                         un-checked-children="关闭"
                       />
                     </template>
                     <template v-else>
                       <Input
-                        v-model:value="formDataMap[group.configGroup]?.[config.configKey]"
+                        v-model:value="getGroupFormData(group.configGroup)[config.configKey]"
                         :placeholder="`请输入${config.displayName}`"
                       />
                     </template>
@@ -366,30 +374,35 @@ onMounted(() => {
                     description="保存后配置将即时生效"
                     @confirm="saveGroup(group.configGroup)"
                   >
-                    <Button type="primary" icon={<SaveOutlined />}>
+                    <Button type="primary">
+                      <template #icon><SaveOutlined /></template>
                       保存配置
                     </Button>
                   </Popconfirm>
-                  <Button icon={<ReloadOutlined />} @click="resetGroup(group.configGroup)">
+                  <Button @click="resetGroup(group.configGroup)">
+                    <template #icon><ReloadOutlined /></template>
                     重置
                   </Button>
                 </Space>
                 <Space>
-                  <Button icon={<HistoryOutlined />} @click="openHistoryModal(group.configGroup)">
+                  <Button @click="openHistoryModal(group.configGroup)">
+                    <template #icon><HistoryOutlined /></template>
                     查看历史
                   </Button>
-                  <Button icon={<ExportOutlined />} @click="exportGroup(group.configGroup)">
+                  <Button @click="exportGroup(group.configGroup)">
+                    <template #icon><ExportOutlined /></template>
                     导出 JSON
                   </Button>
                   <Upload
                     name="file"
                     :showUploadList="false"
-                    :action="'http://localhost:8080/api/system/config/import'"
+                    :action="'/api/system/config/import'"
                     :data="{ updatedBy: 'admin' }"
                     :beforeUpload="beforeImportUpload"
                     @change="handleImport"
                   >
-                    <Button icon={<ImportOutlined />}>
+                    <Button>
+                      <template #icon><ImportOutlined /></template>
                       导入 JSON
                     </Button>
                   </Upload>
@@ -403,12 +416,11 @@ onMounted(() => {
                   , '') }}
                 </Tag>
                 <Tag color="default">
-                  更新人: {{ currentGroup.configs[0].updatedBy }}
+                  更新人: {{ currentGroup.configs[0]?.updatedBy }}
                 </Tag>
               </div>
             </div>
           </Tabs.TabPane>
-        </template>
       </Tabs>
     </div>
 
@@ -453,7 +465,7 @@ onMounted(() => {
           }
         }"
         rowKey="id"
-        scroll="{ y: 400 }"
+        :scroll="{ y: 400 }"
       />
     </Modal>
   </div>

@@ -3,6 +3,12 @@ import { ref, computed } from 'vue'
 import type { CalendarEvent, EventType, CalendarSubscription, ViewMode, Employee } from '../types/calendar'
 import request from '../utils/request'
 
+interface Result<T> {
+  code: number
+  message: string
+  data: T
+}
+
 export const useCalendarStore = defineStore('calendar', () => {
   const currentDate = ref(new Date())
   const viewMode = ref<ViewMode>('month')
@@ -37,7 +43,7 @@ export const useCalendarStore = defineStore('calendar', () => {
   })
 
   const fetchEventTypes = async () => {
-    const res = await request.get('/api/calendar/events/event-types')
+    const res = await request.get<any, Result<EventType[]>>('/api/calendar/events/event-types')
     if (res.code === 200) {
       eventTypes.value = res.data
       enabledEventTypes.value = res.data.map((t: EventType) => t.value)
@@ -45,7 +51,7 @@ export const useCalendarStore = defineStore('calendar', () => {
   }
 
   const fetchEmployees = async () => {
-    const res = await request.get('/api/employees')
+    const res = await request.get<any, Result<Employee[]>>('/api/employees')
     if (res.code === 200) {
       employees.value = res.data
     }
@@ -68,7 +74,7 @@ export const useCalendarStore = defineStore('calendar', () => {
       end.setDate(end.getDate() + 6)
       end.setHours(23, 59, 59)
     }
-    const res = await request.post('/api/calendar/events/query', {
+    const res = await request.post<any, Result<CalendarEvent[]>>('/api/calendar/events/query', {
       startTime: formatDateTime(start),
       endTime: formatDateTime(end),
       eventTypes: enabledEventTypes.value,
@@ -80,7 +86,7 @@ export const useCalendarStore = defineStore('calendar', () => {
   }
 
   const fetchDateEvents = async (dateStr: string) => {
-    const res = await request.get(`/api/calendar/events/date/${dateStr}`)
+    const res = await request.get<any, Result<CalendarEvent[]>>(`/api/calendar/events/date/${dateStr}`)
     if (res.code === 200) {
       selectedDateEvents.value = res.data
       selectedDate.value = dateStr
@@ -88,14 +94,14 @@ export const useCalendarStore = defineStore('calendar', () => {
   }
 
   const fetchSubscriptions = async () => {
-    const res = await request.get(`/api/calendar/events/subscriptions/${currentUserId.value}`)
+    const res = await request.get<any, Result<CalendarSubscription[]>>(`/api/calendar/events/subscriptions/${currentUserId.value}`)
     if (res.code === 200) {
       subscriptions.value = res.data
     }
   }
 
   const addSubscription = async (targetEmployeeId: number, targetEmployeeName: string) => {
-    const res = await request.post('/api/calendar/events/subscriptions', {
+    const res = await request.post<any, Result<unknown>>('/api/calendar/events/subscriptions', {
       subscriberId: currentUserId.value,
       subscriberName: currentUserName.value,
       targetEmployeeId,
@@ -108,7 +114,7 @@ export const useCalendarStore = defineStore('calendar', () => {
   }
 
   const removeSubscription = async (targetEmployeeId: number) => {
-    const res = await request.delete(
+    const res = await request.delete<any, Result<unknown>>(
       `/api/calendar/events/subscriptions/${currentUserId.value}/${targetEmployeeId}`
     )
     if (res.code === 200) {
@@ -118,7 +124,7 @@ export const useCalendarStore = defineStore('calendar', () => {
   }
 
   const createEvent = async (event: CalendarEvent) => {
-    const res = await request.post('/api/calendar/events', event)
+    const res = await request.post<any, Result<unknown>>('/api/calendar/events', event)
     if (res.code === 200) {
       await fetchEvents()
       if (selectedDate.value) {
@@ -129,7 +135,7 @@ export const useCalendarStore = defineStore('calendar', () => {
   }
 
   const updateEvent = async (event: CalendarEvent) => {
-    const res = await request.put('/api/calendar/events', event)
+    const res = await request.put<any, Result<unknown>>('/api/calendar/events', event)
     if (res.code === 200) {
       await fetchEvents()
       if (selectedDate.value) {
@@ -140,7 +146,7 @@ export const useCalendarStore = defineStore('calendar', () => {
   }
 
   const deleteEvent = async (id: number) => {
-    const res = await request.delete(`/api/calendar/events/${id}`)
+    const res = await request.delete<any, Result<unknown>>(`/api/calendar/events/${id}`)
     if (res.code === 200) {
       await fetchEvents()
       if (selectedDate.value) {
@@ -167,7 +173,7 @@ export const useCalendarStore = defineStore('calendar', () => {
       employeeIds: params.employeeIds || enabledEmployeeIds.value,
       calendarName: params.calendarName || '团队日历'
     }
-    const blob = await request.post('/api/calendar/events/export', payload, {
+    const blob = await request.post<any, Blob>('/api/calendar/events/export', payload, {
       responseType: 'blob'
     })
     const url = window.URL.createObjectURL(new Blob([blob]))
