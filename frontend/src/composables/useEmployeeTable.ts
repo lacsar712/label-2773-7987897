@@ -1,4 +1,4 @@
-import { ref, reactive, computed, watch } from 'vue'
+import { reactive, computed, watch } from 'vue'
 import type { TablePaginationConfig } from 'ant-design-vue'
 import { useEmployeeStore, type Employee } from '../stores/employee'
 
@@ -35,8 +35,10 @@ export function useEmployeeTable() {
       list = list.filter((e: Employee) => e.role.includes(searchForm.role))
     }
     pagination.total = list.length
-    const start = (pagination.current - 1) * pagination.pageSize
-    return list.slice(start, start + pagination.pageSize)
+    const current = pagination.current ?? 1
+    const pageSize = pagination.pageSize ?? 10
+    const start = (current - 1) * pageSize
+    return list.slice(start, start + pageSize)
   })
 
   watch(

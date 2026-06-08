@@ -11,7 +11,7 @@ import {
   LogoutOutlined,
   UserOutlined
 } from '@ant-design/icons-vue'
-import { Dropdown, message } from 'ant-design-vue'
+import { message } from 'ant-design-vue'
 
 const route = useRoute()
 const router = useRouter()

@@ -59,7 +59,7 @@ import {
   PlusOutlined,
   SearchOutlined
 } from '@ant-design/icons-vue'
-import type { SearchForm } from '../composables/useEmployeeTable'
+import type { SearchForm } from '../../composables/useEmployeeTable'
 
 defineProps<{
   searchForm: SearchForm

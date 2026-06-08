@@ -1,19 +1,19 @@
 <template>
   <div class="employee-management">
     <EmployeeToolbar
-      :search-form="table.searchForm"
+      :search-form="searchForm"
       @add="form.handleAdd"
-      @search="table.handleSearch"
-      @reset-search="table.handleResetSearch"
+      @search="handleSearch"
+      @reset-search="handleResetSearch"
     />
 
     <EmployeeTable
-      :data-source="table.filteredEmployees"
-      :loading="table.store.loading"
-      :pagination="table.pagination"
+      :data-source="filteredEmployees"
+      :loading="store.loading"
+      :pagination="pagination"
       @edit="form.handleEdit"
-      @delete="table.handleDelete"
-      @table-change="table.handleTableChange"
+      @delete="handleDelete"
+      @table-change="handleTableChange"
     />
 
     <EmployeeFormModal
@@ -35,11 +35,21 @@ import EmployeeFormModal from '../components/employee/EmployeeFormModal.vue'
 import { useEmployeeTable } from '../composables/useEmployeeTable'
 import { useEmployeeForm } from '../composables/useEmployeeForm'
 
-const table = useEmployeeTable()
+const {
+  store,
+  searchForm,
+  pagination,
+  filteredEmployees,
+  handleSearch,
+  handleResetSearch,
+  handleTableChange,
+  handleDelete,
+  fetchEmployees
+} = useEmployeeTable()
 const form = useEmployeeForm()
 
 onMounted(async () => {
-  await table.fetchEmployees()
+  await fetchEmployees()
 })
 </script>
 
